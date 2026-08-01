@@ -98,6 +98,27 @@ body {
 .coordinates { background: #070c2ddd; border-color: #7487bc; color: var(--snow-light); }
 .fallback-marker, .popper-marker { border-color: transparent !important; background: transparent !important; box-shadow: none !important; }
 .fallback-marker:hover, .popper-marker:hover { border-color: transparent !important; box-shadow: none !important; }
+/* Exact city popup v7 */
+.popper-city-popup { pointer-events: none; }
+.popper-city-popup .mapboxgl-popup-content {
+  min-width: 188px;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid #7899e4;
+  border-radius: 10px;
+  background: linear-gradient(145deg, #172d68, #09143d 72%);
+  box-shadow: 0 12px 34px #02051dcc, inset 0 0 0 2px rgba(181, 204, 255, .12), 0 0 22px rgba(100, 145, 239, .28);
+}
+.popper-location-card { position: relative; padding: 12px 15px 13px; text-align: center; }
+.popper-location-card::before { content: ""; position: absolute; inset: 0 0 auto; height: 3px; background: linear-gradient(90deg, #5a79c8, #b7d0ff, #5a79c8); }
+.popper-location-card span { display: block; margin-bottom: 5px; color: #ffd184; font: 800 .56rem/1.2 Arial, sans-serif; letter-spacing: .18em; }
+.popper-location-card strong { display: block; color: #a9c9ff; font: 800 1.02rem/1.15 Georgia, serif; text-shadow: 0 1px 8px rgba(96, 149, 255, .32); }
+.popper-location-card small { display: block; margin-top: 6px; color: #c6d4f2; font: 700 .56rem/1.2 Arial, sans-serif; letter-spacing: .08em; }
+.popper-location-card small::before { content: ""; display: inline-block; width: 5px; height: 5px; margin: 0 5px 1px 0; border-radius: 50%; background: #83d3ae; box-shadow: 0 0 7px #83d3ae; }
+.popper-city-popup.mapboxgl-popup-anchor-bottom .mapboxgl-popup-tip, .popper-city-popup.mapboxgl-popup-anchor-bottom-left .mapboxgl-popup-tip, .popper-city-popup.mapboxgl-popup-anchor-bottom-right .mapboxgl-popup-tip { border-top-color: #101f52; }
+.popper-city-popup.mapboxgl-popup-anchor-top .mapboxgl-popup-tip, .popper-city-popup.mapboxgl-popup-anchor-top-left .mapboxgl-popup-tip, .popper-city-popup.mapboxgl-popup-anchor-top-right .mapboxgl-popup-tip { border-bottom-color: #172d68; }
+.popper-city-popup.mapboxgl-popup-anchor-left .mapboxgl-popup-tip { border-right-color: #13275f; }
+.popper-city-popup.mapboxgl-popup-anchor-right .mapboxgl-popup-tip { border-left-color: #13275f; }
 
 .instruments { background: #4e668f; border-top-color: #8299cc; }
 .instruments > div { background: #101a48; }

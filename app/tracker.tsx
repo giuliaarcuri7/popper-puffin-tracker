@@ -2,6 +2,7 @@
 
 // Map loading fix v5: calculate Popper's live route before revealing Mapbox.
 // Popper tooltip v6: show the nearest city on hover, focus, or tap.
+// Exact-city popup v7: reverse geocode Popper's live coordinates on demand.
 
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 
@@ -70,7 +71,10 @@ function routePositionAt(timestamp: number) {
   const a = destinations[index], b = destinations[nextIndex]; const longitudeDelta = ((b.lng - a.lng + 540) % 360) - 180; const lng = ((a.lng + longitudeDelta * progress + 540) % 360) - 180;
   return { index, nextIndex, progress, lat: a.lat + (b.lat - a.lat) * progress, lng, from: a.name, to: b.name, city: progress < .5 ? a.name : b.name };
 }
-function cityPopup(city: string) { return `<strong style="color:#2457a6;font-size:15px;letter-spacing:.02em">${city}</strong>`; }
+function escapePopupText(value: string) { return value.replace(/[&<>'"]/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[character] || character); }
+function cityPopup(city: string, country = "", label = "CURRENT CITY") {
+  return `<div class="popper-location-card"><span>${escapePopupText(label)}</span><strong>${escapePopupText(city)}</strong>${country ? `<small>${escapePopupText(country)} · LIVE</small>` : ""}</div>`;
+}
 function hash(value: string) { let h = 2166136261; for (const char of value) h = Math.imul(h ^ char.charCodeAt(0), 16777619); return h >>> 0; }
 function etaFor(place: Place) {
   const parts = new Intl.DateTimeFormat("en-CA", { timeZone: place.timezone, year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date());
@@ -126,7 +130,8 @@ export default function Tracker() {
   }, [index]);
   useEffect(() => {
     const marker = mapMarker.current;
-    marker?.setLngLat([current.lng, current.lat]).getPopup()?.setHTML(cityPopup(current.city));
+    const popup = marker?.setLngLat([current.lng, current.lat]).getPopup();
+    if (popup?.isOpen()) popup.setLngLat([current.lng, current.lat]);
     if (marker) { const element = marker.getElement(); element.setAttribute("aria-label", `Popper Puffin near ${current.city}`); }
     const map = mapObject.current;
     if (map?.loaded() && openingFocusAttempts.current < 2) {
@@ -146,10 +151,21 @@ export default function Tracker() {
       const el = document.createElement("button"); el.className = "popper-marker"; el.setAttribute("aria-label", `Popper Puffin near ${openingPosition.city}`);
       const markerImage = document.createElement("img"); markerImage.src = "/popper-marker.png"; markerImage.alt = ""; el.append(markerImage);
       const markerPosition = routePositionAt(Date.now());
-      const popperPopup = new mapboxgl.Popup({ offset: 30, closeButton: false, closeOnClick: false }).setHTML(cityPopup(markerPosition.city));
+      const popperPopup = new mapboxgl.Popup({ offset: 30, closeButton: false, closeOnClick: false, className: "popper-city-popup" }).setHTML(cityPopup(markerPosition.city, "", "NEAREST ROUTE CITY"));
       mapMarker.current = new mapboxgl.Marker({ element: el }).setLngLat([markerPosition.lng, markerPosition.lat]).setPopup(popperPopup).addTo(map);
-      const showPopperCity = () => { const position = currentRef.current; popperPopup.setLngLat([position.lng, position.lat]).setHTML(cityPopup(position.city)).addTo(map); };
-      el.addEventListener("mouseenter", showPopperCity); el.addEventListener("mouseleave", () => popperPopup.remove()); el.addEventListener("focus", showPopperCity); el.addEventListener("blur", () => popperPopup.remove());
+      let popupRequest = 0;
+      const showPopperCity = async () => {
+        const request = ++popupRequest; const position = currentRef.current;
+        popperPopup.setLngLat([position.lng, position.lat]).setHTML(cityPopup("Locating Popper…", "", "CHECKING LIVE POSITION")).addTo(map);
+        try {
+          const response = await fetch(`/api/geocode?lat=${position.lat}&lng=${position.lng}`); const data = await response.json();
+          if (request !== popupRequest) return;
+          if (!response.ok || !data.city) throw new Error();
+          popperPopup.setHTML(cityPopup(data.city, data.country, "POPPER IS OVER")); el.setAttribute("aria-label", `Popper Puffin over ${data.city}`);
+        } catch { if (request === popupRequest) popperPopup.setHTML(cityPopup(position.city, "", "NEAREST ROUTE CITY")); }
+      };
+      const hidePopperCity = () => { popupRequest += 1; popperPopup.remove(); };
+      el.addEventListener("mouseenter", showPopperCity); el.addEventListener("mouseleave", hidePopperCity); el.addEventListener("focus", showPopperCity); el.addEventListener("blur", hidePopperCity); el.addEventListener("click", () => { void showPopperCity(); });
       const poleEl = document.createElement("button"); poleEl.className = "north-pole-marker"; poleEl.title = "North Pole"; poleEl.setAttribute("aria-label", "North Pole landmark");
       const poleCrop = document.createElement("span"); poleCrop.className = "north-pole-crop"; const poleImage = document.createElement("img"); poleImage.src = "/north-pole-marker.png"; poleImage.alt = ""; poleCrop.append(poleImage); poleEl.append(poleCrop);
       northPoleMarker.current = new mapboxgl.Marker({ element: poleEl, anchor: "bottom" }).setLngLat([0, 85.051]).setPopup(new mapboxgl.Popup({ offset: 64 }).setHTML("<strong>North Pole</strong><br>Popper’s home base")).addTo(map);
@@ -163,7 +179,7 @@ export default function Tracker() {
     <header className="masthead"><div><p className="eyebrow">The North Pole Dispatch</p><h1>Popper Puffin Tracker</h1></div><div className="christmas-countdown" aria-label={countdown?.isChristmas ? "Merry Christmas" : countdown ? `${countdown.days} days, ${countdown.hours} hours, ${countdown.minutes} minutes, and ${countdown.seconds} seconds until Christmas` : "Loading Christmas countdown"}><p>CHRISTMAS COUNTDOWN</p>{countdown?.isChristmas ? <strong className="merry-christmas">MERRY CHRISTMAS!</strong> : <div className="countdown-units"><span><b>{countdown?.days ?? "--"}</b><small>DAYS</small></span><i>:</i><span><b>{String(countdown?.hours ?? 0).padStart(2, "0")}</b><small>HRS</small></span><i>:</i><span><b>{String(countdown?.minutes ?? 0).padStart(2, "0")}</b><small>MIN</small></span><i>:</i><span><b>{String(countdown?.seconds ?? 0).padStart(2, "0")}</b><small>SEC</small></span></div>}</div><div className="live"><span /> LIVE</div></header>
     <section className="dashboard" aria-label="Live Popper tracking dashboard">
       <aside className="portrait-card panel"><div className="portrait-frame"><img src="/popper-portrait.png" alt="Popper Puffin in his delivery cap" /></div><p className="ribbon">POPPER PUFFIN</p><dl className="mini-stats"><div><dt>Location</dt><dd>{current.from} → {current.to}</dd></div><div><dt>Local time</dt><dd>{flightWeather ? localTime(flightWeather.timezone, now) : "Locating…"}</dd></div><div><dt>Weather</dt><dd>{flightWeather ? `${Math.round(flightWeather.temperature)}°F · ${flightWeather.summary}` : "Checking skies…"}</dd></div></dl></aside>
-      <section className="map-card panel" aria-label="Interactive globe" data-map-fix="v5" data-popper-tooltip="city-v6"><div className="map-heading"><div><span className="label">CURRENT LEG</span><strong>{current.from} → {current.to}</strong></div><span className="map-status">SIGNAL STRONG</span></div><div className="globe-wrap"><div ref={mapRef} className="mapbox" aria-label="Mapbox globe" />{!mapReady && <div className="css-globe" role="img" aria-label="Animated nighttime globe preview"><div className="continents" /><div className="night-city-lights" aria-hidden="true">{worldLights.filter((destination) => isDarkHour(hourAt(destination, now))).map((destination) => <i key={destination.name} style={{ left: `${((destination.lng + 180) / 360) * 100}%`, top: `${((90 - destination.lat) / 180) * 100}%` }} />)}</div><div className="fallback-north-pole" title="North Pole"><span className="north-pole-crop"><img src="/north-pole-marker.png" alt="" /></span></div><button className="fallback-marker" title={current.city} aria-label={`Popper Puffin near ${current.city}`}><img src="/popper-marker.png" alt="" /></button></div>}<div className="map-radar" aria-hidden="true"><i /></div><div className="coordinates" aria-live="polite">{current.lat.toFixed(4)}, {current.lng.toFixed(4)}</div></div><div className="instruments"><div><span>LATITUDE</span><strong>{coord(current.lat, "N", "S")}</strong></div><div className="compass" aria-label="Heading north east"><i>NE</i></div><div><span>LONGITUDE</span><strong>{coord(current.lng, "E", "W")}</strong></div><div><span>ALTITUDE</span><strong>{(28600 + Math.sin(progress * Math.PI) * 2400).toFixed(0)} FT</strong></div></div></section>
+      <section className="map-card panel" aria-label="Interactive globe" data-map-fix="v5" data-popper-tooltip="exact-city-v7"><div className="map-heading"><div><span className="label">CURRENT LEG</span><strong>{current.from} → {current.to}</strong></div><span className="map-status">SIGNAL STRONG</span></div><div className="globe-wrap"><div ref={mapRef} className="mapbox" aria-label="Mapbox globe" />{!mapReady && <div className="css-globe" role="img" aria-label="Animated nighttime globe preview"><div className="continents" /><div className="night-city-lights" aria-hidden="true">{worldLights.filter((destination) => isDarkHour(hourAt(destination, now))).map((destination) => <i key={destination.name} style={{ left: `${((destination.lng + 180) / 360) * 100}%`, top: `${((90 - destination.lat) / 180) * 100}%` }} />)}</div><div className="fallback-north-pole" title="North Pole"><span className="north-pole-crop"><img src="/north-pole-marker.png" alt="" /></span></div><button className="fallback-marker" title={current.city} aria-label={`Popper Puffin near ${current.city}`}><img src="/popper-marker.png" alt="" /></button></div>}<div className="map-radar" aria-hidden="true"><i /></div><div className="coordinates" aria-live="polite">{current.lat.toFixed(4)}, {current.lng.toFixed(4)}</div></div><div className="instruments"><div><span>LATITUDE</span><strong>{coord(current.lat, "N", "S")}</strong></div><div className="compass" aria-label="Heading north east"><i>NE</i></div><div><span>LONGITUDE</span><strong>{coord(current.lng, "E", "W")}</strong></div><div><span>ALTITUDE</span><strong>{(28600 + Math.sin(progress * Math.PI) * 2400).toFixed(0)} FT</strong></div></div></section>
       <aside className="side-stack"><section className="panel status-card"><h2>Status &amp; info</h2><p className="status-line"><span>●</span> Following the night</p><div className="letter-count"><span>LETTERS PICKED UP</span><strong>{letters.toLocaleString()}</strong><small>and counting</small></div><div className="progress"><i style={{ width: `${36 + progress * 11}%` }} /></div><p className="next">Next stop <strong>{current.to}</strong></p></section><section className="panel eta-card"><p className="eyebrow">WHEN WILL POPPER ARRIVE?</p><h2>ETA Search</h2><form onSubmit={search}><label htmlFor="address">Enter any address worldwide</label><div className="search-row"><input id="address" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="City, postcode, or address" autoComplete="street-address" /><button disabled={searching}>{searching ? "…" : "Find ETA"}</button></div></form>{searchError && <p className="error" role="alert">{searchError}</p>}{place && <div className="eta-result" aria-live="polite"><span>ESTIMATED ARRIVAL</span><strong>{etaFor(place)}</strong><p>{place.name}</p><small>Local time · a magical estimate</small></div>}</section></aside>
     </section>
     <section className="nice-checker panel" aria-labelledby="nice-list-heading"><div className="nice-copy"><p className="eyebrow">NORTH POLE LIST DESK</p><h2 id="nice-list-heading">Naughty or Nice?</h2><small>Names are checked privately and never saved.</small></div><form onSubmit={checkList}><label htmlFor="list-name">Enter your first name</label><div><input id="list-name" value={listName} onChange={(e) => { setListName(e.target.value); setListResult(""); }} maxLength={40} autoComplete="off" placeholder="Your name" /><button>Check the list</button></div></form><div className={`nice-result${listResult ? " is-visible" : ""}`} aria-live="polite">{listResult && <><span aria-hidden="true">★</span><strong>NICE LIST</strong><p>{listResult}</p></>}</div></section>
