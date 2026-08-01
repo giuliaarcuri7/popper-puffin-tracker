@@ -1,2 +1,6 @@
-.popper-marker img { position: absolute; inset: 3px; width: 38px; height: 38px; object-fit: contain; z-index: 2; }
+.popper-marker { width: 62px !important; height: 62px !important; overflow: visible; position: relative; }
+.popper-marker img, .fallback-marker img { position: absolute; inset: -9px; width: 76px; height: 76px; object-fit: contain; z-index: 2; filter: drop-shadow(0 3px 3px #000); }
 .popper-marker span { position: absolute; inset: 0; display: grid; place-items: center; }
+.fallback-marker { width: 62px !important; height: 62px !important; overflow: visible; }
+.fallback-marker span { position: absolute; inset: 0; display: grid; place-items: center; }
+.popper-marker span[hidden], .fallback-marker span[hidden], .portrait-frame span[hidden] { display: none !important; }

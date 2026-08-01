@@ -18,7 +18,7 @@ Map the supplied assets as follows:
 - `IMG_5046.PNG` → `public/popper-marker.png`
 - `00e0db34-665b-4e23-85c6-cecab290a1eb.jpeg` → `public/concept-reference.jpeg` (reference only)
 
-The portrait automatically shows a friendly fallback if its file is unavailable. To use the custom map marker, replace the emoji content in `app/tracker.tsx` with an image pointing to `/popper-marker.png`.
+The supplied Popper artwork is included as both the framed portrait and the live map marker. A friendly fallback remains available if either file cannot load.
 
 ## Deterministic ETA behavior
 

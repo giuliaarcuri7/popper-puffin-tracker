@@ -1,0 +1,116 @@
+:root {
+  --winter-night: #080f35;
+  --winter-indigo: #17245a;
+  --winter-blue: #3f5799;
+  --snow-blue: #8da4df;
+  --snow-light: #c3d0f3;
+  --wood-dark: #321a18;
+  --wood: #5c3021;
+  --evergreen: #173633;
+  --lamp: #ffd184;
+  --cream: #fff0cf;
+}
+
+html { background: #050a25; }
+body {
+  color: var(--cream);
+  background:
+    radial-gradient(circle at 18% 7%, rgba(103, 126, 193, .28), transparent 25%),
+    radial-gradient(circle at 82% 2%, rgba(67, 83, 160, .24), transparent 28%),
+    linear-gradient(180deg, #121d50 0%, var(--winter-night) 54%, #05091f 100%);
+}
+.app-shell { background: linear-gradient(90deg, transparent 49.8%, rgba(171, 190, 239, .025) 50%, transparent 50.2%); }
+.masthead { border-bottom-color: #667bb4; }
+.masthead h1 { color: #fff1d2; text-shadow: 0 3px 22px #02051c, 0 0 24px rgba(110, 135, 208, .18); }
+.eyebrow, .label { color: var(--lamp); }
+.live { color: var(--snow-light); }
+.live span { background: var(--lamp); box-shadow: 0 0 13px var(--lamp); }
+
+.panel {
+  border-color: #6f82bb;
+  background: linear-gradient(145deg, rgba(28, 42, 96, .97), rgba(8, 16, 53, .98));
+  box-shadow: 0 16px 46px #020415aa, inset 0 0 0 3px #080c2c, inset 0 0 0 4px #455b9a;
+}
+.portrait-card { background: linear-gradient(160deg, #202d69, #0c143d 58%, #101737); }
+.portrait-frame {
+  border-color: #7288c8;
+  outline-color: #1b244f;
+  background: radial-gradient(circle at 50% 24%, #667ec1, #202f69 48%, #0b1238 78%);
+  box-shadow: inset 0 0 34px #050824, 0 8px 28px #010312aa;
+}
+.ribbon {
+  color: var(--cream);
+  background: linear-gradient(90deg, #3b201b, #70402a 50%, #3b201b);
+  text-shadow: 0 1px 2px #160b08;
+}
+.mini-stats div { border-top-color: rgba(161, 179, 226, .2); }
+.mini-stats dt { color: #9fb1df; }
+
+.map-heading { background: #111b4a; border-bottom-color: #6175ad; }
+.map-status { color: #9bd1bc; }
+.globe-wrap { background: radial-gradient(circle, #29477d, #111d50 48%, #050a24 72%); }
+.map-radar {
+  position: absolute;
+  z-index: 3;
+  width: min(76%, 430px);
+  aspect-ratio: 1;
+  border: 1px solid rgba(179, 200, 255, .22);
+  border-radius: 50%;
+  overflow: hidden;
+  pointer-events: none;
+  box-shadow: inset 0 0 28px rgba(120, 151, 225, .1), 0 0 24px rgba(120, 151, 225, .08);
+}
+.map-radar::before, .map-radar::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: repeating-radial-gradient(circle, transparent 0 19.5%, rgba(181, 202, 255, .11) 20%, transparent 20.5% 39.5%);
+}
+.map-radar::after { background: linear-gradient(90deg, transparent 49.8%, rgba(181, 202, 255, .12) 50%, transparent 50.2%), linear-gradient(transparent 49.8%, rgba(181, 202, 255, .12) 50%, transparent 50.2%); }
+.map-radar i {
+  position: absolute;
+  inset: -2%;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, transparent 0 79%, rgba(159, 188, 255, .03) 84%, rgba(187, 211, 255, .3) 98%, rgba(230, 239, 255, .7) 99.5%, transparent 100%);
+  animation: sweep 6s linear infinite;
+}
+.css-globe {
+  background: radial-gradient(circle at 34% 30%, #7890d1, #38599c 31%, #172b65 63%, #0a123a 79%);
+  border-color: #92a9e1;
+  box-shadow: inset -35px -20px 54px #03051dcc, inset 12px 8px 25px #bed2ff44, 0 0 42px #667fd566;
+}
+.continents { background: #294c55; box-shadow: 90px 120px 0 -10px #26474f, -80px 160px 0 -18px #26474f; }
+.radar { background: conic-gradient(from 20deg, transparent 0 75%, #b5c9ff24 88%, #dce7ff70 99%, transparent); }
+.coordinates { background: #070c2ddd; border-color: #7487bc; color: var(--snow-light); }
+.fallback-marker, .popper-marker { border-color: var(--lamp) !important; background: #1f3b3a !important; box-shadow: 0 0 0 7px #ffd1842b, 0 0 24px #ffd184aa; }
+
+.instruments { background: #4e668f; border-top-color: #8299cc; }
+.instruments > div { background: #101a48; }
+.instruments span { color: #9fb2e2; }
+.instruments .compass {
+  border-color: #d3aa64;
+  background: radial-gradient(circle, #ffe2a5 0 8%, #24305f 9% 52%, #d3aa64 53% 56%, #0b1238 57%);
+}
+.compass i { color: #ffe2a5; }
+
+.status-card { background: linear-gradient(155deg, #292965, #141a49 56%, #0b1237); }
+.status-card h2 { border-bottom-color: rgba(150, 170, 223, .35); }
+.status-line span { color: #9ed3b4; }
+.letter-count span, .letter-count small { color: #b5c3e5; }
+.progress { background: #090e31; }
+.progress i { background: linear-gradient(90deg, #6984c7, #ffd184); }
+.eta-card { background: linear-gradient(155deg, #17265e, #0c153f); }
+.search-row input, .message-dock input { background: #e8edfb; color: #111a43; }
+.search-row button, .message-dock button {
+  border-color: #ffe1a5;
+  background: linear-gradient(#ffd184, #b97b36);
+  color: #24140b;
+  box-shadow: 0 0 14px rgba(255, 209, 132, .16);
+}
+.eta-result { border-color: #6d82bd; background: #0a1238; }
+.eta-result span { color: var(--lamp); }
+.eta-result small { color: #9eadd2; }
+.message-dock { background: linear-gradient(135deg, #19265b, #0b133d); }
+.reply { color: #bed4c8; }
+footer { color: #8092c2; }
